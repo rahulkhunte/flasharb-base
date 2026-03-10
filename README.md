@@ -1,66 +1,43 @@
-## Foundry
+# ⚡ FlashArb — On-Chain Flash Loan Arbitrage Bot
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Live arbitrage bot running on **Base mainnet** using flash loans. Scans 34 routes across Uniswap V3 and Aerodrome every ~2 seconds.
 
-Foundry consists of:
+## 🔧 How It Works
+1. Detects price gaps between Uniswap V3 and Aerodrome pools
+2. Executes flash loan (zero capital required) via custom Solidity contract
+3. Buys token on cheaper DEX → sells on expensive DEX → repays loan + keeps profit
+4. Zero-loss shield: simulates tx before broadcasting — never loses ETH on failed arb
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## 📊 Live Stats
+- **Network:** Base Mainnet
+- **Routes Monitored:** 34 (USDC, DEGEN, AERO, cbBTC, BRETT, VIRTUAL, ZORA + more)
+- **Scan Speed:** ~200ms per block
+- **RPC:** 4-account rotation (never hits rate limits)
+- **WebSocket:** Real-time block streaming via eth_subscribe
 
-## Documentation
+## 🏗️ Stack
+- Python (asyncio, aiohttp, websockets, web3.py)
+- Solidity (Foundry) — custom FlashArb contract
+- Base mainnet | Uniswap V3 QuoterV2 | Aerodrome Slipstream
+- Oracle Cloud VPS (always-free tier)
 
-https://book.getfoundry.sh/
+## 📁 Structure
+\`\`\`
+flasharb/
+├── scanner/
+│   ├── bot.py          # Main async scanner + executor
+│   ├── find_pools.py   # Pool discovery script
+│   └── withdraw.py     # Safe fund withdrawal
+├── src/
+│   └── FlashArb.sol    # Flash loan contract
+└── foundry.toml
+\`\`\`
 
-## Usage
+## ⚙️ Setup
+\`\`\`bash
+cp scanner/.env.example scanner/.env  # fill in your keys
+cd scanner && pip install -r requirements.txt
+python3 bot.py
+\`\`\`
 
-### Build
-
-```shell
-$ forge build
-```
-
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+> Built by [@rahulkhunte](https://github.com/rahulkhunte)
