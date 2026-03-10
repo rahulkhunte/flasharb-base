@@ -22,8 +22,7 @@ Live arbitrage bot running on **Base mainnet** using flash loans. Scans 34 route
 - Oracle Cloud VPS (always-free tier)
 
 ## 📁 Structure
-```
-\`\`\`
+```bash
 flasharb/
 ├── scanner/
 │   ├── bot.py          # Main async scanner + executor
@@ -32,16 +31,14 @@ flasharb/
 ├── src/
 │   └── FlashArb.sol    # Flash loan contract
 └── foundry.toml
-\`\`\`
 ```
 
 ## ⚙️ Setup
-```
-\`\`\`bash
+
+```bash
 cp scanner/.env.example scanner/.env  # fill in your keys
 cd scanner && pip install -r requirements.txt
 python3 bot.py
-\`\`\`
 
 ```
 
