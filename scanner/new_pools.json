@@ -1,0 +1,65 @@
+[
+  {
+    "sym": "WETH 0.05%",
+    "tvl": 741739.1096,
+    "vol": 1216736.20374577,
+    "mid": "0x0b3e328455c4059eeb9e3f84b5543f74e24e7e1b",
+    "aero_tick": 1
+  },
+  {
+    "sym": "WETH 0.3%",
+    "tvl": 455913.5662,
+    "vol": 366783.574910167,
+    "mid": "0x1111111111166b7fe7bd91427724b487980afc69",
+    "aero_tick": 100
+  },
+  {
+    "sym": "WETH 1%",
+    "tvl": 659280.4715,
+    "vol": 324800.420337007,
+    "mid": "0xb33ff54b9f7242ef1593d2c9bcd8f9df46c77935",
+    "aero_tick": 200
+  },
+  {
+    "sym": "WETH 1%",
+    "tvl": 467121.2247,
+    "vol": 192432.242110516,
+    "mid": "0x6b2504a03ca4d43d0d73776f6ad46dab2f2a4cfd",
+    "aero_tick": 200
+  },
+  {
+    "sym": "WETH 0.05%",
+    "tvl": 81328.518,
+    "vol": 84217.7334209854,
+    "mid": "0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca",
+    "aero_tick": 100
+  },
+  {
+    "sym": "WETH 0.05%",
+    "tvl": 43899.7679,
+    "vol": 74091.1481424794,
+    "mid": "0xfde4c96c8593536e31f229ea8f37b2ada2699bb2",
+    "aero_tick": 1
+  },
+  {
+    "sym": "WETH 1%",
+    "tvl": 102110.9775,
+    "vol": 57742.1728943432,
+    "mid": "0xacfe6019ed1a7dc6f7b508c02d1b04ec88cc21bf",
+    "aero_tick": 100
+  },
+  {
+    "sym": "WETH 0.01%",
+    "tvl": 123899.4944,
+    "vol": 56707.5376732553,
+    "mid": "0xb79dd08ea68a908a97220c76d19a6aa9cbde4376",
+    "aero_tick": 100
+  },
+  {
+    "sym": "WETH 0.3%",
+    "tvl": 43296.7757,
+    "vol": 18954.4074571572,
+    "mid": "0x6985884c4392d348587b19cb9eaaf157f13271cd",
+    "aero_tick": 100
+  }
+]

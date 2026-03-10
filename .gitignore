@@ -1,0 +1,8 @@
+scanner/.env
+scanner/.env.backup
+scanner/venv/
+scanner/__pycache__/
+out/
+cache/
+.env
+*.key
