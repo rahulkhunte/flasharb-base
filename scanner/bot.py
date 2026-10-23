@@ -5,28 +5,30 @@ import requests as req
 
 load_dotenv("/home/ubuntu/flasharb/scanner/.env")
 
-# ── 4-RPC Rotation (from .env) ──────────────────────────────────
-RPC_URLS = [
-    os.getenv("RPC_URL_1"),
-    os.getenv("RPC_URL_2"),
-    os.getenv("RPC_URL_3"),
-    os.getenv("RPC_URL_4"),
-]
+# ── WSS: Alchemy only (cheap, just block notifications) ─────────
 WSS_URLS = [
     os.getenv("WSS_URL_1"),
     os.getenv("WSS_URL_2"),
     os.getenv("WSS_URL_3"),
     os.getenv("WSS_URL_4"),
 ]
+
+# ── HTTP: Free unlimited RPCs for heavy batch eth_call work ─────
+RPC_URLS = [
+    os.getenv("RPC_URL_2"),
+    os.getenv("RPC_URL_1"),
+]
+
 _rpc_cycle = itertools.cycle(RPC_URLS)
 _wss_cycle = itertools.cycle(WSS_URLS)
 def get_rpc(): return next(_rpc_cycle)
 def get_wss(): return next(_wss_cycle)
 # ────────────────────────────────────────────────────────────────
 
-w3 = Web3(Web3.HTTPProvider(RPC_URLS[0]))
+# w3 uses Alchemy for reliable tx sending (rare, low CU)
+w3 = Web3(Web3.HTTPProvider(os.getenv("RPC_URL_1")))
 
-print("ArbBot V10 | WebSocket + Batch RPC + Zero-Loss Shield | 4-RPC Rotation")
+print("ArbBot V11 | Free RPC Batch + Alchemy WSS | Zero-Loss Shield")
 print(f"Connected: {w3.is_connected()} | Block: {w3.eth.block_number}")
 
 WETH   = Web3.to_checksum_address("0x4200000000000000000000000000000000000006")
@@ -41,12 +43,11 @@ VVV    = Web3.to_checksum_address("0xacfe6019ed1a7dc6f7b508c02d1b04ec88cc21bf")
 ZRO    = Web3.to_checksum_address("0x6985884c4392d348587b19cb9eaaf157f13271cd")
 BRETT  = Web3.to_checksum_address("0x532f27101965dd16442E59d40670FaF5eBB142E4")
 TOSHI  = Web3.to_checksum_address("0xAC1Bd2486aAf3B5C0fc3Fd868558b082a531B2B4")
-VIRTUAL= Web3.to_checksum_address("0x0b3e328455c4059EEb9e3f84b5543F74E24e7020")
 HIGHER = Web3.to_checksum_address("0x0578d8A44db98B23BF096A382e016e29a5Ce0ffe")
 WELL   = Web3.to_checksum_address("0xA88594D404727625A9437C3f886C7643872296AE")
 
-LOAN           = Web3.to_wei(float(os.getenv("LOAN_WETH", "0.5")), "ether")
-MIN_PROFIT_WEI = Web3.to_wei(float(os.getenv("MIN_PROFIT_WETH", "0.0003")), "ether")
+LOAN           = Web3.to_wei(float(os.getenv("LOAN_WETH", "0.025")), "ether")
+MIN_PROFIT_WEI = Web3.to_wei(float(os.getenv("MIN_PROFIT_WETH", "0.00003")), "ether")
 DEBT           = int(LOAN * 1.0005)
 CONTRACT       = os.getenv("CONTRACT_ADDRESS")
 CHAIN_ID       = 8453
@@ -54,6 +55,7 @@ wallet         = w3.eth.account.from_key(os.getenv("PRIVATE_KEY"))
 
 Q_UNI  = Web3.to_checksum_address("0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a")
 Q_AERO = Web3.to_checksum_address("0x254cF9E1E6e233aa1AC962CB9B05b2cfeAaE15b0")
+Q_CAKE = Web3.to_checksum_address("0xB048Bbc1Ee6b733FFfCFb9e9CeF7375518e25997")
 
 UNI_ABI  = [{"inputs": [{"components": [{"internalType": "address","name": "tokenIn","type": "address"},{"internalType": "address","name": "tokenOut","type": "address"},{"internalType": "uint256","name": "amountIn","type": "uint256"},{"internalType": "uint24","name": "fee","type": "uint24"},{"internalType": "uint160","name": "sqrtPriceLimitX96","type": "uint160"}],"internalType": "struct IQuoterV2.QuoteExactInputSingleParams","name": "params","type": "tuple"}],"name": "quoteExactInputSingle","outputs": [{"internalType": "uint256","name": "amountOut","type": "uint256"},{"internalType": "uint160","name": "sqrtPriceX96After","type": "uint160"},{"internalType": "uint32","name": "initializedTicksCrossed","type": "uint32"},{"internalType": "uint256","name": "gasEstimate","type": "uint256"}],"stateMutability": "nonpayable","type": "function"}]
 AERO_ABI = [{"inputs": [{"components": [{"internalType": "address","name": "tokenIn","type": "address"},{"internalType": "address","name": "tokenOut","type": "address"},{"internalType": "uint256","name": "amountIn","type": "uint256"},{"internalType": "int24","name": "tickSpacing","type": "int24"},{"internalType": "uint160","name": "sqrtPriceLimitX96","type": "uint160"}],"internalType": "struct ISlipstreamQuoter.QuoteExactInputSingleParams","name": "params","type": "tuple"}],"name": "quoteExactInputSingle","outputs": [{"internalType": "uint256","name": "amountOut","type": "uint256"},{"internalType": "uint160","name": "sqrtPriceX96After","type": "uint160"},{"internalType": "uint32","name": "initializedTicksCrossed","type": "uint32"},{"internalType": "uint256","name": "gasEstimate","type": "uint256"}],"stateMutability": "nonpayable","type": "function"}]
@@ -61,35 +63,29 @@ ARB_ABI  = [{"inputs":[{"name":"token","type":"address"},{"name":"amount","type"
 
 q_uni  = w3.eth.contract(address=Q_UNI,  abi=UNI_ABI)
 q_aero = w3.eth.contract(address=Q_AERO, abi=AERO_ABI)
+q_cake = w3.eth.contract(address=Q_CAKE, abi=UNI_ABI)
 arb    = w3.eth.contract(address=CONTRACT, abi=ARB_ABI)
 
 TARGETS = [
-    (USDC,    500,   100, "USDC-500"),
-    (USDC,    3000,  200, "USDC-3000"),
-    (DEGEN,   3000,  200, "DEGEN"),
-    (DEGEN,   10000, 200, "DEGEN-10k"),
-    (AERO,    3000,  200, "AERO"),
-    (cbBTC,   500,   100, "cbBTC"),
-    (ZORA,    500,   100, "ZORA"),
-    (FAI,     500,   200, "FAI"),
-    (REI,     500,   200, "REI"),
-    (VVV,     3000,  100, "VVV"),
-    (ZRO,     3000,  100, "ZRO"),
-    (BRETT,   3000,  200, "BRETT"),
-    (BRETT,   10000, 200, "BRETT-10k"),
-    (TOSHI,   3000,  200, "TOSHI"),
-    (VIRTUAL, 3000,  200, "VIRTUAL"),
-    (HIGHER,  3000,  200, "HIGHER"),
-    (WELL,    3000,  200, "WELL"),
+    (USDC,  100,  100, 1,   "USDC"),
+    (cbBTC, 500,  100, 100, "cbBTC"),
+    (DEGEN, 3000, 500, 200, "DEGEN"),
+    (AERO,  3000, 100, 200, "AERO"),
+    (BRETT, 3000, 500, 200, "BRETT"),
+    (TOSHI, 3000, 500, 200, "TOSHI"),
+    (WELL,  3000, 500, 200, "WELL"),
+    (ZRO,   3000, 2500,100, "ZRO"),
 ]
 
 def make_calldata():
     calls = []
-    for (tok, fee, tick, label) in TARGETS:
-        cd = q_uni.encode_abi("quoteExactInputSingle", [{"tokenIn":WETH,"tokenOut":tok,"amountIn":LOAN,"fee":fee,"sqrtPriceLimitX96":0}])
-        calls.append((Q_UNI, cd, tok, fee, tick, label, True))
+    for (tok, uni_fee, cake_fee, tick, label) in TARGETS:
+        cd = q_uni.encode_abi("quoteExactInputSingle", [{"tokenIn":WETH,"tokenOut":tok,"amountIn":LOAN,"fee":uni_fee,"sqrtPriceLimitX96":0}])
+        calls.append((Q_UNI,  cd, tok, uni_fee, cake_fee, tick, label, "UNI"))
+        cd = q_cake.encode_abi("quoteExactInputSingle", [{"tokenIn":WETH,"tokenOut":tok,"amountIn":LOAN,"fee":cake_fee,"sqrtPriceLimitX96":0}])
+        calls.append((Q_CAKE, cd, tok, uni_fee, cake_fee, tick, label, "CAKE"))
         cd = q_aero.encode_abi("quoteExactInputSingle", [{"tokenIn":WETH,"tokenOut":tok,"amountIn":LOAN,"tickSpacing":tick,"sqrtPriceLimitX96":0}])
-        calls.append((Q_AERO, cd, tok, fee, tick, label, False))
+        calls.append((Q_AERO, cd, tok, uni_fee, cake_fee, tick, label, "AERO"))
     return calls
 
 LEG1_CALLS = make_calldata()
@@ -106,7 +102,7 @@ async def scan_block(session, block_num):
     global count, tx_count, gas_saved, best_ever, best_label, scanning
     if scanning: return
     scanning = True
-    rpc = get_rpc()  # rotate HTTP RPC per block
+    rpc = get_rpc()  # free RPC for batch calls
     try:
         start = time.time()
         batch1 = [
@@ -117,7 +113,8 @@ async def scan_block(session, block_num):
         chunk_a, chunk_b = batch1[:mid], batch1[mid:]
         async def fetch(b):
             async with session.post(rpc, json=b) as r:
-                return await r.json()
+                res = await r.json()
+                return res if isinstance(res, list) else []
         results = await asyncio.gather(fetch(chunk_a), fetch(chunk_b))
         raw1 = results[0] + results[1]
 
@@ -127,22 +124,25 @@ async def scan_block(session, block_num):
             mid_out = int(res["result"][:66], 16)
             if mid_out == 0: continue
             i = res["id"]
-            _, _, tok, fee, tick, label, buy_on_uni = LEG1_CALLS[i]
+            _, _, tok, uni_fee, cake_fee, tick, label, source = LEG1_CALLS[i]
             nid = len(batch2)
-            if buy_on_uni:
+            if source in ("UNI", "CAKE"):
                 cd2 = q_aero.encode_abi("quoteExactInputSingle", [{"tokenIn":tok,"tokenOut":WETH,"amountIn":mid_out,"tickSpacing":tick,"sqrtPriceLimitX96":0}])
                 batch2.append({"jsonrpc":"2.0","id":nid,"method":"eth_call","params":[{"to":Q_AERO,"data":cd2},"latest"]})
             else:
-                cd2 = q_uni.encode_abi("quoteExactInputSingle", [{"tokenIn":tok,"tokenOut":WETH,"amountIn":mid_out,"fee":fee,"sqrtPriceLimitX96":0}])
+                cd2 = q_uni.encode_abi("quoteExactInputSingle", [{"tokenIn":tok,"tokenOut":WETH,"amountIn":mid_out,"fee":uni_fee,"sqrtPriceLimitX96":0}])
                 batch2.append({"jsonrpc":"2.0","id":nid,"method":"eth_call","params":[{"to":Q_UNI,"data":cd2},"latest"]})
-            meta[nid] = (tok, fee, tick, label, buy_on_uni, mid_out)
+            meta[nid] = (tok, uni_fee, cake_fee, tick, label, source, mid_out)
 
         if not batch2:
             print(f"[Block {block_num}] No valid leg1 quotes")
             return
 
         async with session.post(rpc, json=batch2) as r:
-            raw2 = await r.json()
+                raw2 = await r.json()
+                if not isinstance(raw2, list):
+                    print(f"RPC leg2 rejected, skipping")
+                    return
 
         best_p=-10**18; best_m=None
         for res in raw2:
@@ -156,36 +156,44 @@ async def scan_block(session, block_num):
         count += 1
         if best_p > best_ever:
             best_ever = best_p
-            if best_m: best_label = best_m[3]
+            if best_m: best_label = f"{best_m[5]}->{'AERO' if best_m[5] != 'AERO' else 'UNI'} {best_m[4]}"
         ping = (time.time()-start)*1000
         print(f"[Block {block_num} | {ping:.0f}ms | {tx_count}tx {gas_saved}saves] Gap: {best_p/10**18:.6f} | Best: {best_ever/10**18:.6f} WETH | {best_label}")
 
         if best_p > MIN_PROFIT_WEI and best_m:
-            tok,fee,tick,label,buy_on_uni,_ = best_m
+            tok,uni_fee,cake_fee,tick,label,source,_ = best_m
             from eth_abi import encode as abi_encode
-            params = abi_encode(["bool","address","uint24","int24"],[buy_on_uni,tok,fee,tick])
-            route  = f"{'Uni->Aero' if buy_on_uni else 'Aero->Uni'} {label} fee={fee}"
-            print(f"\nFIRING: {route} | {best_p/10**18:.6f} WETH")
-            nonce = w3.eth.get_transaction_count(wallet.address)
-            tx = arb.functions.executeArb(WETH, LOAN, params).build_transaction({
-                "from":wallet.address,"nonce":nonce,
-                "maxFeePerGas":w3.to_wei("0.05","gwei"),
-                "maxPriorityFeePerGas":w3.to_wei("0.005","gwei"),
-                "chainId":CHAIN_ID
-            })
+            buy_on_uni = (source != "AERO")
+            params = abi_encode(["bool","address","uint24","int24"],[buy_on_uni,tok,uni_fee,tick])
+            route  = f"{source}->{'AERO' if buy_on_uni else 'UNI'} {label}"
+            print(f"\n🚀 FIRING: {route} | profit={best_p/10**18:.6f} WETH")
+            notify(f"🚀 Attempting fire: {route} | {best_p/10**18:.6f} WETH")
             try:
-                tx["gas"] = int(w3.eth.estimate_gas(tx)*1.1)
-            except:
-                gas_saved+=1
-                print(f"SHIELD blocked #{gas_saved}")
-                notify(f"Shield #{gas_saved} — gap gone")
-                return
-            signed  = wallet.sign_transaction(tx)
-            txh     = w3.eth.send_raw_transaction(signed.raw_transaction)
-            tx_count+=1
-            link = f"https://basescan.org/tx/{txh.hex()}"
-            print(f"TX #{tx_count}: {link}")
-            notify(f"TX #{tx_count} | {route} | {best_p/10**18:.6f} WETH | {link}")
+                nonce = w3.eth.get_transaction_count(wallet.address)
+                base_fee = w3.eth.get_block('latest')['baseFeePerGas']
+                tx = arb.functions.executeArb(WETH, LOAN, params).build_transaction({
+                    "from":wallet.address,"nonce":nonce,
+                    "maxFeePerGas":int(base_fee * 2),
+                    "maxPriorityFeePerGas":w3.to_wei("0.001","gwei"),
+                    "chainId":CHAIN_ID
+                })
+                try:
+                    tx["gas"] = int(w3.eth.estimate_gas(tx)*1.1)
+                    print(f"Gas estimated: {tx['gas']}")
+                except Exception as gas_err:
+                    gas_saved+=1
+                    print(f"SHIELD blocked #{gas_saved} | reason: {gas_err}")
+                    notify(f"🛡 Shield #{gas_saved} — {route} | gap gone by tx time")
+                    return
+                signed = wallet.sign_transaction(tx)
+                txh    = w3.eth.send_raw_transaction(signed.raw_transaction)
+                tx_count+=1
+                link = f"https://basescan.org/tx/{txh.hex()}"
+                print(f"✅ TX #{tx_count}: {link}")
+                notify(f"✅ TX #{tx_count} | {route} | {best_p/10**18:.6f} WETH | {link}")
+            except Exception as tx_err:
+                print(f"TX ERROR: {tx_err}")
+                notify(f"❌ TX failed: {route} | {tx_err}")
     except Exception as e:
         print(f"ERR: {e}")
     finally:
@@ -196,10 +204,11 @@ async def main():
     print(f"Wallet: {wallet.address} | ETH: {w3.from_wei(bal, 'ether'):.6f}")
     print(f"Loan: {LOAN/10**18} WETH | Min profit: {MIN_PROFIT_WEI/10**18} WETH")
     print(f"Targets: {len(LEG1_CALLS)} routes | Contract: {CONTRACT}")
-    notify(f"ArbBot V10 Live | {len(LEG1_CALLS)} routes | {LOAN/10**18} WETH loan | 4-RPC Rotation")
+    print(f"Free RPCs: {RPC_URLS}")
+    notify(f"ArbBot V11 Live | {len(LEG1_CALLS)} routes | Free RPC batch | Alchemy WSS")
     async with aiohttp.ClientSession() as session:
         while True:
-            wss = get_wss()  # rotate WSS on every reconnect
+            wss = get_wss()
             try:
                 async with websockets.connect(wss) as ws:
                     await ws.send(json.dumps({"jsonrpc":"2.0","id":1,"method":"eth_subscribe","params":["newHeads"]}))
